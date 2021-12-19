@@ -1,0 +1,8 @@
+.custom-drawer-text {
+  display: inline-block;
+}
+@media only screen and (max-width: 600px) {
+  .custom-drawer-text {
+    display: none;
+  }
+}
