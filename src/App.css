@@ -41,3 +41,12 @@ body {
   color: red;
   cursor: pointer;
 }
+
+.list {
+  border: 1px solid #ccc;
+  padding: 10px 15px;
+  max-width: 450px;
+}
+.list-item {
+  border-bottom: 2px solid #ddd;
+}

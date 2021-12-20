@@ -10,6 +10,7 @@ import Register from "./pages/Register/Register";
 import {
   checkUserSignInOrNot,
   loadServiceData,
+  getAdmin,
 } from "./globalState/GlobalStateSlice";
 import { useDispatch } from "react-redux";
 import SingleService from "./pages/SignleService/SingleService";
@@ -20,15 +21,28 @@ import Payment from "./pages/Dashboard/User/Payment";
 import Checkout from "./pages/Dashboard/Checkout/Checkout";
 import { useSelector } from "react-redux";
 import Loading from "./pages/Shared/Loading";
+import AllOrders from "./pages/Dashboard/Admin/AllOrders";
+import OrderDetails from "./pages/Dashboard/Admin/OrderDetails";
 
 function App() {
   const dispatch = useDispatch();
-  const { isUserLoading } = useSelector((state) => state.globalState);
+  const { isUserLoading, user, isAdmin } = useSelector(
+    (state) => state.globalState
+  );
 
-  useEffect(() => {
+  console.log(user);
+  console.log(isAdmin);
+  useEffect(async () => {
     console.log("from app use effect");
-    dispatch(checkUserSignInOrNot());
-  });
+    const loggedUser = dispatch(checkUserSignInOrNot());
+  }, []);
+
+  useEffect(async () => {
+    console.log("admin called", user?.uid);
+    if (user?.uid) {
+      const isAdmin = await dispatch(getAdmin(user.uid));
+    }
+  }, [user?.uid]);
 
   useEffect(() => {
     dispatch(loadServiceData());
@@ -61,6 +75,18 @@ function App() {
             </PrivateRoute>
           }
         >
+          <Route
+            path="all-orders"
+            element={
+              <PrivateRoute>
+                <AllOrders />
+              </PrivateRoute>
+            }
+          ></Route>
+          <Route
+            path="all-orders/order-details/:orderId"
+            element={<OrderDetails></OrderDetails>}
+          ></Route>
           <Route
             path="my-orders"
             element={

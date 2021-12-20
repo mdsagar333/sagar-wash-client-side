@@ -7,28 +7,97 @@ import {
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 
-import { data } from "../assets/ServiceData/ServiceData";
 // initializing firebase
 const app = initializeApp(firebaseConfig);
-
+const auth = getAuth();
 // checking user sign in or not
 export const checkUserSignInOrNot = createAsyncThunk(
   "global/getUser",
   async (thunkApi) => {
-    const auth = getAuth();
-    // const res = await onAuthStateChanged(auth, (user) => user);
-    const res2 = await new Promise((resolved, reject) => {
+    // const res = await onAuthStateChanged(auth, (user) => {
+    //   console.log(user);
+    //   return user;
+    // });
+    const res = await new Promise((resolved, reject) => {
       onAuthStateChanged(auth, (user) => {
+        console.log(user);
         if (user) {
-          resolved(user);
+          return resolved(user);
         }
+        reject(null);
       });
     });
 
-    console.log(res2);
-    return res2;
+    return res;
+  }
+);
+
+// create user with email and password
+
+export const createUserWithEmail = createAsyncThunk(
+  "global/createUserWithEmail",
+  async (user) => {
+    const auth = getAuth();
+    const { email, password, name } = user;
+    const createdUser = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    ).then((userCredential) => {
+      const user = userCredential.user;
+      console.log(user);
+      return user;
+    });
+
+    const updatedUser = await updateProfile(auth.currentUser, {
+      displayName: name,
+    }).then(() => {
+      return auth.currentUser;
+    });
+
+    const registerUserInDb = await fetch(
+      "https://murmuring-eyrie-08320.herokuapp.com/api/v1/users",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          name: updatedUser.displayName,
+          email: updatedUser.email,
+          uid: updatedUser.uid,
+          role: "user",
+        }),
+      }
+    ).then((res) => res.json());
+
+    console.log(registerUserInDb);
+
+    return updatedUser;
+  }
+);
+
+// login user with email password
+
+export const loginUserWithEmail = createAsyncThunk(
+  "global/loginUserWithEmail",
+  async (user) => {
+    const { email, password } = user;
+    const loggedUser = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    ).then((userCredential) => {
+      const signedUser = userCredential.user;
+      return signedUser;
+    });
+
+    return loggedUser;
   }
 );
 
@@ -61,13 +130,16 @@ export const googleSignIn = createAsyncThunk(
       role: "user",
     };
 
-    const dbUser = await fetch("http://127.0.0.1:4000/api/v1/users", {
-      method: "PATCH",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(newUser),
-    });
+    const dbUser = await fetch(
+      "https://murmuring-eyrie-08320.herokuapp.com/api/v1/users",
+      {
+        method: "PATCH",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      }
+    );
 
     console.log(res);
 
@@ -78,9 +150,9 @@ export const googleSignIn = createAsyncThunk(
 export const loadServiceData = createAsyncThunk(
   "global/getServices",
   async () => {
-    const res = await fetch("http://127.0.0.1:4000/api/v1/services").then(
-      (result) => result.json()
-    );
+    const res = await fetch(
+      "https://murmuring-eyrie-08320.herokuapp.com/api/v1/services"
+    ).then((result) => result.json());
 
     return res.services;
   }
@@ -91,7 +163,7 @@ export const loadServiceData = createAsyncThunk(
 export const loadSingleService = createAsyncThunk(
   "global/getSingleService",
   async (id, thunkApi) => {
-    const url = `http://127.0.0.1:4000/api/v1/services/${id}`;
+    const url = `https://murmuring-eyrie-08320.herokuapp.com/api/v1/services/${id}`;
     console.log(url);
     const service = await fetch(url).then((result) => result.json());
 
@@ -103,13 +175,16 @@ export const loadSingleService = createAsyncThunk(
 export const createOrder = createAsyncThunk(
   "global/createOrder",
   async (info) => {
-    const order = await fetch("http://127.0.0.1:4000/api/v1/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(info),
-    });
+    const order = await fetch(
+      "https://murmuring-eyrie-08320.herokuapp.com/api/v1/orders",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(info),
+      }
+    );
 
     return order;
   }
@@ -118,7 +193,7 @@ export const createOrder = createAsyncThunk(
 export const getMyOrders = createAsyncThunk(
   "global/getMyOrders",
   async (userId) => {
-    const url = `http://127.0.0.1:4000/api/v1/orders/${userId}`;
+    const url = `https://murmuring-eyrie-08320.herokuapp.com/api/v1/orders/${userId}`;
     const { orders } = await fetch(url).then((res) => res.json());
     console.log(orders);
     return orders;
@@ -130,7 +205,7 @@ export const getMyOrders = createAsyncThunk(
 export const getOrderForPayment = createAsyncThunk(
   "global/getOrderForPayment",
   async (orderId) => {
-    const url = `http://127.0.0.1:4000/api/v1/order/${orderId}`;
+    const url = `https://murmuring-eyrie-08320.herokuapp.com/api/v1/order/${orderId}`;
     const { order } = await fetch(url).then((res) => res.json());
     console.log(order);
     return order;
@@ -141,7 +216,7 @@ export const getOrderForPayment = createAsyncThunk(
 export const updateOrderPayment = createAsyncThunk(
   "global/updateOrderPayment",
   async (id) => {
-    const url = `http://127.0.0.1:4000/api/v1/update-order/${id}`;
+    const url = `https://murmuring-eyrie-08320.herokuapp.com/api/v1/update-order/${id}`;
     const updatedOrder = await fetch(url, {
       method: "PUT",
       headers: {
@@ -154,17 +229,47 @@ export const updateOrderPayment = createAsyncThunk(
     return updatedOrder;
   }
 );
+// get all orders
+export const getAllOrder = createAsyncThunk("global/getAllOrder", async () => {
+  const { orders } = await fetch(
+    "https://murmuring-eyrie-08320.herokuapp.com/api/v1/orders"
+  ).then((res) => res.json());
+  console.log(orders);
+  return orders;
+});
 
-//
+// get SIngle Order
+export const getSingleOrder = createAsyncThunk(
+  "global/getSingleOrder",
+  async (id) => {
+    const url = `https://murmuring-eyrie-08320.herokuapp.com/api/v1/order/${id}`;
+    const { order } = await fetch(url).then((res) => res.json());
+    return order;
+  }
+);
+
+//delete an order
 export const deleteAnOrder = createAsyncThunk(
   "global/deleteAnOrder",
   async (id) => {
-    const url = `http://127.0.0.1:4000/api/v1/order/${id}`;
+    const url = `https://murmuring-eyrie-08320.herokuapp.com/api/v1/order/${id}`;
     const deleteOrder = await fetch(url, {
       method: "DELETE",
     });
+
+    return deleteOrder;
   }
 );
+
+// get Adming
+
+export const getAdmin = createAsyncThunk("global/getAdmin", async (id) => {
+  const url = `https://murmuring-eyrie-08320.herokuapp.com/api/v1/admin/${id}`;
+  console.log(url);
+  const { isAdmin } = await fetch(url).then((res) => res.json());
+
+  return isAdmin;
+});
 
 // get client secret
 
@@ -172,7 +277,7 @@ export const getClientSecretForPayment = createAsyncThunk(
   "global/getClientSecretPayment",
   async (price) => {
     const { clientSecret } = await fetch(
-      "http://127.0.0.1:4000/create-payment-intent",
+      "https://murmuring-eyrie-08320.herokuapp.com/create-payment-intent",
       {
         method: "POST",
         headers: {
@@ -198,6 +303,10 @@ const initialState = {
   myOrders: [],
   singleOrder: null,
   paymentClientSecret: null,
+  needToReload: 0,
+  isAdmin: null,
+  adminLoading: true,
+  adminAllOrders: [],
 };
 
 // creating slice
@@ -208,8 +317,10 @@ export const globalStateSlice = createSlice({
     setServices: (state) => {},
 
     setOrderService: (state, { payload }) => {
-      console.log(payload);
       state.orderService = { ...state.orderService, ...payload };
+    },
+    setIsNeedToReload: (state) => {
+      state.needToReload = this.state.needToReload++;
     },
   },
   extraReducers: {
@@ -218,7 +329,6 @@ export const globalStateSlice = createSlice({
     },
     [googleSignIn.fulfilled]: (state, { payload }) => {
       state.user = payload;
-      state.isUserLoading = false;
     },
     [googleSignOut.pending]: () => {
       console.log("singout pending");
@@ -228,10 +338,20 @@ export const globalStateSlice = createSlice({
     },
     [checkUserSignInOrNot.pending]: (state) => {
       console.log("on auth change pending");
+      state.isUserLoading = true;
     },
-    [checkUserSignInOrNot.fulfilled]: (state, action) => {
-      state.user = action.payload;
+    [checkUserSignInOrNot.fulfilled]: (state, { payload }) => {
+      console.log("on auth change fullfiled", payload);
+
+      if (payload) {
+        state.user = payload;
+      }
       state.isUserLoading = false;
+    },
+    [checkUserSignInOrNot.rejected]: (state, { payload }) => {
+      console.log("on auth change rejected", payload);
+      state.isUserLoading = false;
+      state.user = null;
     },
     [loadServiceData.pending]: () => {
       console.log("Load data is pending");
@@ -290,7 +410,42 @@ export const globalStateSlice = createSlice({
       console.log("Order updated", payload);
     },
     [deleteAnOrder.pending]: () => {},
-    [deleteAnOrder.fulfilled]: (state, { payload }) => {},
+    [deleteAnOrder.fulfilled]: (state, { payload }) => {
+      state.needToReload = state.needToReload + 1;
+    },
+    [createUserWithEmail.fulfilled]: (state, { payload }) => {
+      console.log("user created");
+
+      state.user = payload;
+      state.isUserLoading = false;
+    },
+    [loginUserWithEmail.fulfilled]: (state, { payload }) => {
+      state.user = payload;
+    },
+    [loginUserWithEmail.rejected]: (state, { payload }) => {
+      console.log(payload);
+    },
+    [getAdmin.pending]: (state) => {
+      state.adminLoading = true;
+    },
+    [getAdmin.fulfilled]: (state, { payload }) => {
+      console.log(payload);
+      state.isAdmin = payload;
+      state.adminLoading = false;
+    },
+    [getAdmin.rejected]: (state, { payload }) => {
+      state.isAdmin = payload;
+    },
+    [getAllOrder.pending]: () => {
+      console.log("All order pending");
+    },
+    [getAllOrder.fulfilled]: (state, { payload }) => {
+      console.log("all order fullfilled", payload);
+      state.adminAllOrders = payload;
+    },
+    [getSingleOrder.fulfilled]: (state, { payload }) => {
+      state.singleOrder = payload;
+    },
   },
 });
 

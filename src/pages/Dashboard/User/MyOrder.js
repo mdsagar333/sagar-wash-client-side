@@ -18,40 +18,72 @@ const OrderItem = ({
   index,
   _id,
 }) => {
+  const [open, setOpen] = useState(false);
+  const dispatch = useDispatch();
+  const onOpenModal = () => setOpen(true);
+  const onCloseModal = () => setOpen(false);
+  const { setIsNeedToReload } = useSelector((state) => state.globalState);
+  const handleDelete = () => {
+    onOpenModal();
+  };
+
+  const handleConfirmDelete = async (id) => {
+    const response = await dispatch(deleteAnOrder(id));
+    if (response.meta.requestStatus === "fulfilled") {
+    }
+    onCloseModal();
+  };
   return (
-    <tr>
-      <th scope="row">{index + 1}</th>
-      <td>{orderType}</td>
-      <td>{numClothes}</td>
-      <td>{pickUpdate}</td>
-      <td>{totalCost}</td>
-      <td>
-        {isPaid ? (
-          <span className={`${isPaid ? "badge bg-success p-2" : ""}`}>
-            Paid
-          </span>
-        ) : (
-          "Not Paid"
-        )}
-      </td>
-      <td>
-        <button className="btn" disabled={isPaid} onClick={() => {}}>
-          <MdDeleteOutline className="icon-delete" />
-        </button>
-      </td>
-    </tr>
+    <>
+      <tr>
+        <th scope="row">{index + 1}</th>
+        <td>{orderType}</td>
+        <td>{numClothes}</td>
+        <td>{pickUpdate}</td>
+        <td>{totalCost}</td>
+        <td>
+          {isPaid ? (
+            <span className={`${isPaid ? "badge bg-success p-2" : ""}`}>
+              Paid
+            </span>
+          ) : (
+            "Not Paid"
+          )}
+        </td>
+        <td>
+          <button className="btn" disabled={isPaid} onClick={handleDelete}>
+            <MdDeleteOutline className="icon-delete" />
+          </button>
+        </td>
+      </tr>
+      <Modal open={open} onClose={onCloseModal} center>
+        <div className="contaner my-5">
+          <h4>Are you sure, you want to delete?</h4>
+          <div className="mt-4">
+            <button
+              className="btn btn-outline-primary me-2"
+              onClick={() => handleConfirmDelete(_id)}
+            >
+              Confirm
+            </button>
+            <button className="btn btn-outline-primary" onClick={onCloseModal}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 };
 
 const MyOrder = () => {
   const dispatch = useDispatch();
-  const { isOrderDataLoading, myOrders, user, isUserLoading } = useSelector(
-    (state) => state.globalState
-  );
+  const { isOrderDataLoading, myOrders, user, isUserLoading, needToReload } =
+    useSelector((state) => state.globalState);
 
   useEffect(() => {
     dispatch(getMyOrders(user.uid));
-  }, []);
+  }, [needToReload]);
   if (isOrderDataLoading) {
     return <Loading />;
   }

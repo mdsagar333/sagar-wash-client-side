@@ -74,18 +74,19 @@ const CheckOutForm = ({ order, clientSecret }) => {
   return (
     <div>
       <form onSubmit={handleSubmit}>
+        <h2 className="mb-2">Insert Your Card Details</h2>
         <CardElement
           options={{
             style: {
               base: {
                 fontSize: "16px",
-                color: "#424770",
+                color: "#000",
                 "::placeholder": {
-                  color: "#aab7c4",
+                  color: "#000",
                 },
               },
               invalid: {
-                color: "#9e2146",
+                color: "#000",
               },
             },
           }}

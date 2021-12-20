@@ -15,6 +15,7 @@ import Footer from "../Home/Footer/Footer";
 const SingleService = () => {
   const { serviceId } = useParams();
   const dispatch = useDispatch();
+  const [confirmMessage, setConfirmMessage] = useState("");
   const { isSingleServiceLoading, user, singleService } = useSelector(
     (state) => state.globalState
   );
@@ -52,9 +53,14 @@ const SingleService = () => {
     onOpenModal();
   };
 
-  const handleConfirm = (e) => {
+  const handleConfirm = async (e) => {
     e.preventDefault();
-    dispatch(createOrder(orderInfo));
+    setConfirmMessage("");
+    const response = await dispatch(createOrder(orderInfo));
+    console.log(response);
+    if (response.meta.requestStatus === "fulfilled") {
+      setConfirmMessage("Your order is created.");
+    }
     onCloseModal();
   };
 
@@ -74,7 +80,12 @@ const SingleService = () => {
   }, [user]);
 
   if (isSingleServiceLoading) {
-    return <Loading />;
+    return (
+      <>
+        <Header />
+        <Loading />
+      </>
+    );
   }
 
   // destructuring service property
@@ -85,7 +96,9 @@ const SingleService = () => {
     <>
       <Header />
       <div className="container mt-5">
-        service id {serviceId}
+        {confirmMessage && (
+          <p className="alert alert-success">{confirmMessage}</p>
+        )}
         <div className="row gx-5">
           <div className="col-12 col-md-6">
             <img src={image} alt="" className="img-fluid mb-4" />
